@@ -15,7 +15,11 @@ end
 --search player
 function searchPlr(name)
     for i, v in pairs(game.Players:GetChildren()) do
-        if v.name:lower():gsub(" ", ""):find(name:lower():gsub(" ", "")) then
+        if v.Name:lower():gsub(" ", ""):find(name:lower():gsub(" ", "")) then
+            return v
+        end
+
+        if v.DisplayName:lower():gsub(" ", ""):find(name:lower():gsub(" ", "")) then
             return v
         end
     end
