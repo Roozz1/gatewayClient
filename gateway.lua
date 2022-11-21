@@ -81,6 +81,7 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
 
                             local jsonFormat = game:GetService("HttpService"):JSONEncode(content)
                             stalkWs:Send(jsonFormat)
+                            chat("stalking "..plr.Name)
                         end
                     end
                 end
