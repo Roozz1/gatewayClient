@@ -53,11 +53,11 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
 end)
 
 game.Players.PlayerAdded:Connect(function(plr)
-    ws:Send("!join!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") joined the game.")
+    ws:Send("!join!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
 end)
 
 game.Players.PlayerRemoving:Connect(function(plr)
-    ws:Send("!leave!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") left the game.")
+    ws:Send("!leave!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
 end)
 
 --stop script if socket connection is closed
