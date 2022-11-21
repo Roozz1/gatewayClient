@@ -73,7 +73,7 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
             end
 
             if isSplit then
-                if args[1]:lower() == prefix.."stalk" then
+                if args[1]:lower() == prefix.."s" then
                     if args[2] then
                         local plr = searchPlr(args[2])
                         if plr then
@@ -85,7 +85,6 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
 
                             local jsonFormat = game:GetService("HttpService"):JSONEncode(content)
                             stalkWs:Send(jsonFormat)
-                            chat("stalking "..plr.Name)
                         end
                     end
                 end
