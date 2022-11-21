@@ -1,6 +1,7 @@
 local stopPerm = false
 local prefix = "!"
 local ws = syn.websocket.connect("ws://localhost:5000")
+local stalkWs = syn.websocket.connect("ws://localhost:5500")
 
 local plr = game.Players.LocalPlayer
 
@@ -11,17 +12,49 @@ function chat(msg)
     game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
 end
 
+--search player
+function searchPlr(name)
+    for i, v in pairs(game.Players:GetChildren()) do
+        if v.name:lower():gsub(" ", ""):find(name:lower():gsub(" ", "")) then
+            return v
+        end
+    end
+
+    return false
+end
+
+--split
+function split (inputstr, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+  
+    local t = {}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+        table.insert(t, str)
+    end
+  
+    return t
+end
+
 --listen for messages
 game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClientEvent:Connect(function(object)
     if not stopPerm then
         local msg = object.Message
         local author = game.Players:FindFirstChild(object.FromSpeaker)
+        local isSplit = false
+        local args
+        if msg:find(" ") then
+            isSplit = true
+            args = split(msg)
+        end
 
         if tostring(author.UserId) == "3462545255" then
             if msg:lower() == prefix.."stop" then
                 print("stopped")
                 stopPerm = true
                 ws:Close()
+                stalkWs:Close()
                 writefile(fileName, "!NoContent!")
             end
 
@@ -32,6 +65,24 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                 else
                     closePlayersOnlyMode = false
                     chat("close players only = false")
+                end
+            end
+
+            if isSplit then
+                if args[1]:lower() == prefix.."stalk" then
+                    if args[2] then
+                        local plr = searchPlr(args[2])
+                        if plr then
+                            local content = {
+                                ["Name"] = plr.Name,
+                                ["Id"] = plr.UserId,
+                                ["DisplayName"] = plr.DisplayName  
+                            }
+
+                            local jsonFormat = game:GetService("HttpService"):JSONEncode(content)
+                            stalkWs:Send(jsonFormat)
+                        end
+                    end
                 end
             end
         end
@@ -67,6 +118,10 @@ ws.OnClose:Connect(function()
     writefile(fileName, "!NoContent!")
 end)
 
+stalkWs.OnClose:Connect(function()
+    print("stalk websocket disconnected, script will still continue running")
+end)
+
 --from discord to game
 fileName = "sendMsgToGame.txt"
 
@@ -77,5 +132,5 @@ while true do
         chat("FROM DISCO: "..fileContent)
         writefile(fileName, "!NoContent!")
     end
-    wait(0.5)
+    wait(0.1)
 end
