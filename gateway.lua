@@ -73,7 +73,7 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                 end
             end
             
-            if msg:lower() == prefix.."discord" then
+            if msg:lower() == prefix.."allow" then
                 if not allowDiscord then
                     allowDiscord = true
                     chat("allow disco = true")
