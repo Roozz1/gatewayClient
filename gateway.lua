@@ -6,6 +6,7 @@ local stalkWs = syn.websocket.connect("ws://localhost:5500")
 local plr = game.Players.LocalPlayer
 
 local closePlayersOnlyMode = false
+local allowDiscord = true
 
 --chat in game
 function chat(msg)
@@ -71,6 +72,16 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                     chat("close players only = false")
                 end
             end
+            
+            if msg:lower() == prefix.."discord" then
+                if not allowDiscord then
+                    allowDiscord = true
+                    chat("allow disco = true")
+                else
+                    allowDiscord = false
+                    chat("allow disco = false")
+                end
+            end
 
             if isSplit then
                 if args[1]:lower() == prefix.."s" then
@@ -132,10 +143,12 @@ fileName = "sendMsgToGame.txt"
 
 while true do
     if stopPerm then break end
-    local fileContent = readfile(fileName)
-    if fileContent ~= "!NoContent!" then
-        chat("FROM DISCO: "..fileContent)
-        writefile(fileName, "!NoContent!")
+    if allowDiscord then
+        local fileContent = readfile(fileName)
+        if fileContent ~= "!NoContent!" then
+            chat("FROM DISCO: "..fileContent)
+            writefile(fileName, "!NoContent!")
+        end
     end
     wait(0.1)
 end
