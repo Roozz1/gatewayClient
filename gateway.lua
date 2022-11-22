@@ -118,6 +118,7 @@ end)
 --stop script if socket connection is closed
 ws.OnClose:Connect(function()
     stopPerm = true
+    stalkWs:Stop()
     print("socket (chatlog) closed, script stopped")
     writefile(fileName, "!NoContent!")
 end)
