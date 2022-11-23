@@ -92,7 +92,6 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                         if args[3] then
                             if args[3] == "hide" then
                                 if args[2] == "off" then
-                                    chat("filter off")
                                     filter = false
                                     filterUserId = ""
                                 else
@@ -100,7 +99,6 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                                     if plr then
                                         filter = true
                                         filterUserId = plr.UserId
-                                        chat("filter on - "..plr.Name)
                                     end
                                 end
                             end
