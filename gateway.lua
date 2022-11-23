@@ -3,10 +3,13 @@ local prefix = "!"
 local ws = syn.websocket.connect("ws://localhost:5000")
 local stalkWs = syn.websocket.connect("ws://localhost:5500")
 
-local plr = game.Players.LocalPlayer
+local lPlr = game.Players.LocalPlayer
 
 local closePlayersOnlyMode = false
 local allowDiscord = true
+
+local filter = false
+local filterUserId = ""
 
 --chat in game
 function chat(msg)
@@ -84,6 +87,40 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
             end
 
             if isSplit then
+                if args[1]:lower() == prefix.."filter" then
+                    if args[2] then
+                        if args[3] then
+                            if args[3] == "hide" then
+                                if args[2] == "off" then
+                                    chat("filter off")
+                                    filter = false
+                                    filterUserId = ""
+                                else
+                                    local plr = searchPlr(args[2])
+                                    if plr then
+                                        filter = true
+                                        filterUserId = plr.UserId
+                                        chat("filter on - "..plr.Name)
+                                    end
+                                end
+                            end
+                        else
+                            if args[2] == "off" then
+                                chat("filter off")
+                                filter = false
+                                filterUserId = ""
+                            else
+                                local plr = searchPlr(args[2])
+                                if plr then
+                                    filter = true
+                                    filterUserId = tostring(plr.UserId)
+                                    chat("filter on - "..plr.Name)
+                                end
+                            end
+                        end
+                    end
+                end
+
                 if args[1]:lower() == prefix.."s" then
                     if args[2] then
                         local plr = searchPlr(args[2])
@@ -108,10 +145,22 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
             local humRoot = char.HumanoidRootPart
 
             if plr:DistanceFromCharacter(humRoot.Position) < 25 then
-                ws:Send("!close!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                if filter then
+                    if filterUserId == tostring(author.UserId) then
+                        ws:Send("!close!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                    end
+                else
+                    ws:Send("!close!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                end
             end
         else
-            ws:Send("!default!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+            if filter then
+                if filterUserId == tostring(author.UserId) then
+                    ws:Send("!default!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                end
+            else
+                ws:Send("!default!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+            end
         end
     else
         return
@@ -119,11 +168,23 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
 end)
 
 game.Players.PlayerAdded:Connect(function(plr)
-    ws:Send("!join!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
+    if filter then
+        if filterUserId == tostring(plr.UserId) then
+            ws:Send("!join!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
+        end
+    else
+        ws:Send("!join!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
+    end
 end)
 
 game.Players.PlayerRemoving:Connect(function(plr)
-    ws:Send("!leave!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
+    if filter then
+        if filterUserId == tostring(plr.UserId) then
+            ws:Send("!leave!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
+        end
+    else
+        ws:Send("!leave!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
+    end
 end)
 
 --stop script if socket connection is closed
