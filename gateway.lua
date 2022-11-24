@@ -1,153 +1,218 @@
--- vars
-local discordia = require("discordia")
-local json = require("json")
-local http = require("coro-http")
-local client = discordia.Client()
+local stopPerm = false
+local prefix = "!"
+local ws = syn.websocket.connect("ws://localhost:5000")
+local stalkWs = syn.websocket.connect("ws://localhost:5500")
 
-local token = "OTk0NjgxNzUxMzk1OTAxNDcw.GrhWoh.svKQnalVlUnB0EDVlhTznWg3FXgMNdOiE0jB1Y"
-local time = require("timer")
+local currentGame = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
 
-local latestLogPath = "../latestlog.txt"
-local chatGame = "../../workspace/sendMsgToGame.txt"
-local gatewayChannel = "1044380012356321290"
+local lPlr = game.Players.LocalPlayer
 
-local stalkChannel = "1044382306682535986"
-local stalkFile = "../stalkInfoForBot.txt"
-local stalkFriendsFile = "../stalkFriends.txt"
-local favouriteGamesFile = "../stalkFavouriteGames.txt"
+local closePlayersOnlyMode = false
+local allowDiscord = true
 
------code
-local function getFileContent(p)
-    local file = io.open(p, "r")
-    local content = file:read()
-    file:close()
+local filter = false
+local filterUserId = ""
 
-    return content
+--chat in game
+function chat(msg)
+    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
 end
 
-local function embed(chan, desc, color, img)
-    if img ~= "" then
-        chan:send{
-            embed = {
-                description = desc,
-                color = discordia.Color.fromRGB(color[1], color[2], color[3]).value,
-                image = {
-                    url = img
-                }
-            }
-        }
+--search player
+function searchPlr(name)
+    for i, v in pairs(game.Players:GetChildren()) do
+        if v.Name:lower():gsub(" ", ""):find(name:lower():gsub(" ", "")) then
+            return v
+        end
+
+        if v.DisplayName:lower():gsub(" ", ""):find(name:lower():gsub(" ", "")) then
+            return v
+        end
+    end
+
+    return false
+end
+
+--split
+function split (inputstr, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+  
+    local t = {}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+        table.insert(t, str)
+    end
+  
+    return t
+end
+
+--listen for messages
+game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClientEvent:Connect(function(object)
+    if not stopPerm then
+        local msg = object.Message
+        local author = game.Players:FindFirstChild(object.FromSpeaker)
+        local isSplit = false
+        local args
+        if msg:find(" ") then
+            isSplit = true
+            args = split(msg)
+        end
+
+        if tostring(author.UserId) == "3462545255" then
+            if msg:lower() == prefix.."stop" then
+                print("stopped")
+                stopPerm = true
+                ws:Close()
+                stalkWs:Close()
+                writefile(fileName, "!NoContent!")
+            end
+
+            if msg:lower() == prefix.."switch" then
+                if not closePlayersOnlyMode then
+                    closePlayersOnlyMode = true
+                    chat("close players only = true")
+                else
+                    closePlayersOnlyMode = false
+                    chat("close players only = false")
+                end
+            end
+            
+            if msg:lower() == prefix.."allow" then
+                if not allowDiscord then
+                    allowDiscord = true
+                    chat("allow disco = true")
+                else
+                    allowDiscord = false
+                    chat("allow disco = false")
+                end
+            end
+
+            if isSplit then
+                if args[1]:lower() == prefix.."filter" then
+                    if args[2] then
+                        if args[3] then
+                            if args[3] == "hide" then
+                                if args[2] == "off" then
+                                    filter = false
+                                    filterUserId = ""
+                                else
+                                    local plr = searchPlr(args[2])
+                                    if plr then
+                                        filter = true
+                                        filterUserId = plr.UserId
+                                    end
+                                end
+                            end
+                        else
+                            if args[2] == "off" then
+                                chat("filter off")
+                                filter = false
+                                filterUserId = ""
+                            else
+                                local plr = searchPlr(args[2])
+                                if plr then
+                                    filter = true
+                                    filterUserId = tostring(plr.UserId)
+                                    chat("filter on - "..plr.Name)
+                                end
+                            end
+                        end
+                    end
+                end
+
+                if args[1]:lower() == prefix.."s" then
+                    if args[2] then
+                        local plr = searchPlr(args[2])
+                        if plr then
+                            local content = {
+                                ["Name"] = plr.Name,
+                                ["Id"] = plr.UserId,
+                                ["DisplayName"] = plr.DisplayName,
+                                ["JobId"] = game.JobId,
+                                ["GameName"] = currentGame,
+                                ["GameId"] = game.PlaceId
+                            }
+
+                            local jsonFormat = game:GetService("HttpService"):JSONEncode(content)
+                            stalkWs:Send(jsonFormat)
+                        end
+                    end
+                end
+            end
+        end
+
+        --log chat msg
+        if closePlayersOnlyMode then
+            local char = author.Character
+            local humRoot = char.HumanoidRootPart
+
+            if plr:DistanceFromCharacter(humRoot.Position) < 25 then
+                if filter then
+                    if filterUserId == tostring(author.UserId) then
+                        ws:Send("!close!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
+                    end
+                else
+                    ws:Send("!close!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
+                end
+            end
+        else
+            if filter then
+                if filterUserId == tostring(author.UserId) then
+                    ws:Send("!default!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
+                end
+            else
+                ws:Send("!default!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
+            end
+        end
     else
-        chan:send{
-            embed = {
-                description = desc,
-                color = discordia.Color.fromRGB(color[1], color[2], color[3]).value,
-            }
-        }
+        return
     end
+end)
+
+game.Players.PlayerAdded:Connect(function(plr)
+    if filter then
+        if filterUserId == tostring(plr.UserId) then
+            ws:Send("!join!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.`")
+        end
+    else
+        ws:Send("!join!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.`")
+    end
+end)
+
+game.Players.PlayerRemoving:Connect(function(plr)
+    if filter then
+        if filterUserId == tostring(plr.UserId) then
+            ws:Send("!leave!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.`")
+        end
+    else
+        ws:Send("!leave!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.`")
+    end
+end)
+
+--stop script if socket connection is closed
+ws.OnClose:Connect(function()
+    stopPerm = true
+    stalkWs:Stop()
+    print("socket (chatlog) closed, script stopped")
+    writefile(fileName, "!NoContent!")
+end)
+
+stalkWs.OnClose:Connect(function()
+    print("stalk websocket disconnected, script will still continue running")
+end)
+
+--from discord to game
+fileName = "sendMsgToGame.txt"
+
+while true do
+    if stopPerm then break end
+    if allowDiscord then
+        local fileContent = readfile(fileName)
+        if fileContent ~= "!NoContent!" then
+            chat("FROM DISCO: "..fileContent)
+            writefile(fileName, "!NoContent!")
+        end
+    end
+    wait(0.1)
 end
-
-local oldMsg = getFileContent(latestLogPath)
-local oldStalk = getFileContent(stalkFile)
-
-client:on("messageCreate", function(message)
-    if not message.author.bot then
-        if message.channel.id == gatewayChannel then
-            --discord to roblox
-            local file = io.open(chatGame, "w")
-            file:write(message.content)
-            file:close()
-            message:addReaction("✅")
-        end
-    end
-end)
-
-client:once('ready', function()
-    client:setGame("sex!!")
-    client:setStatus("sex")
-
-    while true do
-        time.sleep(5)
-        local newMsg = getFileContent(latestLogPath)
-        local newStalk = getFileContent(stalkFile)
-
-        --chatlog
-        if newMsg ~= oldMsg then
-            print("msg")
-            oldMsg = newMsg
-            if tostring(newMsg):find("!close!") then
-                embed(client:getChannel(gatewayChannel), "`Mode: Close` " .. tostring(newMsg):gsub("!close!", ""), {50, 50, 255}, "")
-            elseif tostring(newMsg):find("!default!") then
-                embed(client:getChannel(gatewayChannel), "`Mode: Default` " .. tostring(newMsg):gsub("!default!", ""), {50, 255, 50}, "")
-            elseif tostring(newMsg):find("!join!") then
-                embed(client:getChannel(gatewayChannel), tostring(newMsg):gsub("!join!", ""), {175, 255, 175}, "")
-            elseif tostring(newMsg):find("!leave!") then
-                embed(client:getChannel(gatewayChannel), tostring(newMsg):gsub("!leave!", "") , {255, 175, 175}, "")
-            end
-        end
-
-        --stalk log
-        if newStalk ~= oldStalk then
-            print("stak")
-            local temp = newStalk
-            local file = io.open(stalkFile, "w")
-            file:write("")
-            file:close()
-            newStalk = getFileContent(stalkFile)
-            oldStalk = newStalk
-
-            print(tostring(temp))
-            local data = json.decode(tostring(temp))
-            local content = {}
-
-            if data then
-                --general info
-                table.insert(content, "`Name:` **"..data.Name.."**")
-                table.insert(content, "`ID:` **"..data.Id.."**")
-                table.insert(content, "`Display Name:` **"..data.DisplayName.."**")
-                table.insert(content, "[`Game Info:`](https://www.roblox.com/games/"..data.GameId..")\n```Name: "..data.GameName.."\nPlace ID: "..data.GameId.."\nJob ID: "..data.JobId.."```")
-
-                --friends
-                print(getFileContent(stalkFriendsFile))
-                local friends = json.decode(getFileContent(stalkFriendsFile))
-                local friendsRaw = {}
-                for i, v in pairs(friends) do
-                    if v.IsOnline then
-                        table.insert(friendsRaw, ":green_circle: **"..v.Username.."**")
-                    else
-                        table.insert(friendsRaw, ":red_circle: **"..v.Username.."**")
-                    end
-                end
-    
-                if friendsRaw[1] then
-                    table.insert(content, "`Friends:`\n"..table.concat(friendsRaw, "\n").."\n`("..#friendsRaw..")`")
-                else
-                    table.insert(content, "`Friends:`\n```No friends found.```")
-                end
-
-                --favourite games
-                print(getFileContent(favouriteGamesFile))
-                local favouriteGames = json.decode(getFileContent(favouriteGamesFile))
-                local favouriteGamesRaw = {}
-                local count = 1
-                for i, v in pairs(favouriteGames.Data.Items) do
-                    if count <= 15 then
-                        table.insert(favouriteGamesRaw, ":video_game: **["..v.Item.Name.."]("..v.Item.AbsoluteUrl..")**")
-                    else
-                        break
-                    end
-                end
-
-                if favouriteGamesRaw[1] then
-                    table.insert(content, "`Favourite Games:`\n"..table.concat(favouriteGamesRaw, "\n").."\n`("..favouriteGames.Data.TotalItems..")`")
-                else
-                    table.insert(content, "`Favourite Games:`\n```No favourite games found.```")
-                end
-
-                --send
-                embed(client:getChannel(stalkChannel), "**Stalk - ["..data.Name.."](https://www.roblox.com/users/"..data.Id.."/profile)**\n"..table.concat(content, "\n"), {255, 255, 255}, "https://www.roblox.com/headshot-thumbnail/image?userId="..data.Id.."&width=420&height=420&format=png")
-            end
-        end
-    end
-end)
-
-client:run("Bot " .. token)
