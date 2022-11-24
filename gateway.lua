@@ -3,6 +3,8 @@ local prefix = "!"
 local ws = syn.websocket.connect("ws://localhost:5000")
 local stalkWs = syn.websocket.connect("ws://localhost:5500")
 
+local currentGame = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+
 local lPlr = game.Players.LocalPlayer
 
 local closePlayersOnlyMode = false
@@ -126,7 +128,12 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                             local content = {
                                 ["Name"] = plr.Name,
                                 ["Id"] = plr.UserId,
-                                ["DisplayName"] = plr.DisplayName  
+                                ["DisplayName"] = plr.DisplayName,
+                                ["CurrentGame"] = {
+                                    ["JobId"] = game.JobId,
+                                    ["Name"] = currentGame,
+                                    ["GameId"] = game.PlaceId
+                                }
                             }
 
                             local jsonFormat = game:GetService("HttpService"):JSONEncode(content)
@@ -145,19 +152,19 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
             if plr:DistanceFromCharacter(humRoot.Position) < 25 then
                 if filter then
                     if filterUserId == tostring(author.UserId) then
-                        ws:Send("!close!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                        ws:Send("!close!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
                     end
                 else
-                    ws:Send("!close!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                    ws:Send("!close!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
                 end
             end
         else
             if filter then
                 if filterUserId == tostring(author.UserId) then
-                    ws:Send("!default!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                    ws:Send("!default!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
                 end
             else
-                ws:Send("!default!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                ws:Send("!default!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
             end
         end
     else
@@ -168,20 +175,20 @@ end)
 game.Players.PlayerAdded:Connect(function(plr)
     if filter then
         if filterUserId == tostring(plr.UserId) then
-            ws:Send("!join!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
+            ws:Send("!join!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
         end
     else
-        ws:Send("!join!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
+        ws:Send("!join!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
     end
 end)
 
 game.Players.PlayerRemoving:Connect(function(plr)
     if filter then
         if filterUserId == tostring(plr.UserId) then
-            ws:Send("!leave!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
+            ws:Send("!leave!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
         end
     else
-        ws:Send("!leave!Game: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
+        ws:Send("!leave!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
     end
 end)
 
