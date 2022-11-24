@@ -150,19 +150,19 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
             if plr:DistanceFromCharacter(humRoot.Position) < 25 then
                 if filter then
                     if filterUserId == tostring(author.UserId) then
-                        ws:Send("!close!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                        ws:Send("!close!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
                     end
                 else
-                    ws:Send("!close!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                    ws:Send("!close!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
                 end
             end
         else
             if filter then
                 if filterUserId == tostring(author.UserId) then
-                    ws:Send("!default!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                    ws:Send("!default!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
                 end
             else
-                ws:Send("!default!Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said: "..msg)
+                ws:Send("!default!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
             end
         end
     else
@@ -173,20 +173,20 @@ end)
 game.Players.PlayerAdded:Connect(function(plr)
     if filter then
         if filterUserId == tostring(plr.UserId) then
-            ws:Send("!join!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
+            ws:Send("!join!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") joined the game.")
         end
     else
-        ws:Send("!join!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.")
+        ws:Send("!join!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") joined the game.")
     end
 end)
 
 game.Players.PlayerRemoving:Connect(function(plr)
     if filter then
         if filterUserId == tostring(plr.UserId) then
-            ws:Send("!leave!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
+            ws:Send("!leave!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") left the game.")
         end
     else
-        ws:Send("!leave!Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.")
+        ws:Send("!leave!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") left the game.")
     end
 end)
 
