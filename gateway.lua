@@ -59,7 +59,7 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
             args = split(msg)
         end
 
-        if tostring(author.UserId) == "3462545255" then
+        if tostring(author.UserId) == tostring(lPlr.UserId) then
             if msg:lower() == prefix.."stop" then
                 print("stopped")
                 stopPerm = true
