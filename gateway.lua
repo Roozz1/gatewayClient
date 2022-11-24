@@ -173,20 +173,20 @@ end)
 game.Players.PlayerAdded:Connect(function(plr)
     if filter then
         if filterUserId == tostring(plr.UserId) then
-            ws:Send("!join!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") joined the game.")
+            ws:Send("!join!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.`")
         end
     else
-        ws:Send("!join!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") joined the game.")
+        ws:Send("!join!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") joined the game.`")
     end
 end)
 
 game.Players.PlayerRemoving:Connect(function(plr)
     if filter then
         if filterUserId == tostring(plr.UserId) then
-            ws:Send("!leave!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") left the game.")
+            ws:Send("!leave!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.`")
         end
     else
-        ws:Send("!leave!**Game: "..currentGame.." | **"..plr.DisplayName.." ("..plr.Name..") left the game.")
+        ws:Send("!leave!`Game: "..currentGame.." | "..plr.DisplayName.." ("..plr.Name..") left the game.`")
     end
 end)
 
