@@ -77,7 +77,7 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                     chat("close players only = false")
                 end
             end
-            
+
             if msg:lower() == prefix.."allow" then
                 if not allowDiscord then
                     allowDiscord = true
@@ -147,7 +147,7 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
             local char = author.Character
             local humRoot = char.HumanoidRootPart
 
-            if plr:DistanceFromCharacter(humRoot.Position) < 25 then
+            if lPlr:DistanceFromCharacter(humRoot.Position) < 25 then
                 if filter then
                     if filterUserId == tostring(author.UserId) then
                         ws:Send("!close!**Game: "..currentGame.." | "..author.DisplayName.." ("..author.Name..") said:** "..msg)
