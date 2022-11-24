@@ -129,11 +129,9 @@ game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClie
                                 ["Name"] = plr.Name,
                                 ["Id"] = plr.UserId,
                                 ["DisplayName"] = plr.DisplayName,
-                                ["CurrentGame"] = {
-                                    ["JobId"] = game.JobId,
-                                    ["Name"] = currentGame,
-                                    ["GameId"] = game.PlaceId
-                                }
+                                ["JobId"] = game.JobId,
+                                ["GameName"] = currentGame,
+                                ["GameId"] = game.PlaceId
                             }
 
                             local jsonFormat = game:GetService("HttpService"):JSONEncode(content)
